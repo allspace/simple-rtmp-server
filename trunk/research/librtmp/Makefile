@@ -51,15 +51,18 @@ SRS_RESEARCH_DEPS = Makefile
 
 # for x86/x64 platform
 ifeq ($(GCC), gcc)
-    EXTRA_CXX_FLAG = -g -O0 -ldl -lstdc++
+    EXTRA_CXX_FLAG = -g -O0 -ldl -lstdc++ -I../../src/core
+	ifeq ($(MSYSTEM),MINGW32)
+		EXTRA_CXX_FLAG = -g -O0 -ldl -lstdc++ -I../../src/core -lWs2_32
+	endif
 endif
 # for arm.
 ifeq ($(GCC), arm-linux-gnueabi-gcc)
-    EXTRA_CXX_FLAG = -g -O0 -ldl -static -lstdc++
+    EXTRA_CXX_FLAG = -g -O0 -ldl -static -lstdc++ -I../../src/core
 endif
 # for mips, add -lgcc_eh, or stl compile failed.
 ifeq ($(GCC), mipsel-openwrt-linux-gcc)
-    EXTRA_CXX_FLAG = -g -O0 -ldl -lstdc++ -lgcc_eh
+    EXTRA_CXX_FLAG = -g -O0 -ldl -lstdc++ -lgcc_eh -I../../src/core
 endif
 # for ssl or nossl
 ifeq ($(HANDSHAKE), SSL)

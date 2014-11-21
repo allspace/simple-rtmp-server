@@ -30,8 +30,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <sys/types.h>
 
+#include <srs_platform.hpp>
+
 // for srs-librtmp, @see https://github.com/winlinvip/simple-rtmp-server/issues/213
-#ifdef _WIN32
+#if 0
     #define _CRT_SECURE_NO_WARNINGS
     typedef unsigned long long u_int64_t;
     typedef long long int64_t;

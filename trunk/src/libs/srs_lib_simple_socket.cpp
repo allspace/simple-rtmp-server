@@ -45,22 +45,26 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 SimpleSocketStream::SimpleSocketStream()
 {
-    fd = -1;
+    //fd = -1;
+	SOCKET_RESET(fd);
     send_timeout = recv_timeout = ST_UTIME_NO_TIMEOUT;
     recv_bytes = send_bytes = 0;
 }
 
 SimpleSocketStream::~SimpleSocketStream()
 {
-    if (fd != -1) {
-        ::close(fd);
-        fd = -1;
-    }
+    //if (fd != -1) {
+    //    ::close(fd);
+    //    fd = -1;
+    //}
+	SOCKET_CLOSE(fd);
 }
 
 int SimpleSocketStream::create_socket()
 {
-    if((fd = ::socket(AF_INET, SOCK_STREAM, 0)) < 0){
+    //if((fd = ::socket(AF_INET, SOCK_STREAM, 0)) < 0){
+	fd = ::socket(AF_INET, SOCK_STREAM, 0);
+	if(SOCKET_CHECK(fd)){
         return ERROR_SOCKET_CREATE;
     }
 
@@ -95,7 +99,7 @@ int SimpleSocketStream::read(void* buf, size_t size, ssize_t* nread)
     // On success a non-negative integer indicating the number of bytes actually read is returned 
     // (a value of 0 means the network connection is closed or end of file is reached).
     if (nb_read <= 0) {
-        if (nb_read < 0 && errno == ETIME) {
+        if (nb_read < 0 && SOCKET_ERRNO() == ETIME) {
             return ERROR_SOCKET_TIMEOUT;
         }
         
@@ -158,7 +162,7 @@ int SimpleSocketStream::writev(const iovec *iov, int iov_size, ssize_t* nwrite)
     // returned, and errno is set appropriately.
     if (nb_write <= 0) {
         // @see https://github.com/winlinvip/simple-rtmp-server/issues/200
-        if (nb_write < 0 && errno == ETIME) {
+        if (nb_write < 0 && SOCKET_ERRNO() == ETIME) {
             return ERROR_SOCKET_TIMEOUT;
         }
         
@@ -215,7 +219,7 @@ int SimpleSocketStream::write(void* buf, size_t size, ssize_t* nwrite)
     
     if (nb_write <= 0) {
         // @see https://github.com/winlinvip/simple-rtmp-server/issues/200
-        if (nb_write < 0 && errno == ETIME) {
+        if (nb_write < 0 && SOCKET_ERRNO() == ETIME) {
             return ERROR_SOCKET_TIMEOUT;
         }
         
