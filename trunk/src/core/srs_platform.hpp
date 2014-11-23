@@ -3,6 +3,9 @@
 
 #if !defined(_WIN32) || defined(__CYGWIN__) 		/*not on windows or it's cygwin. _WIN32 includes both 32-bit and 64-bit*/
 
+#define SOCKET_ETIME		ETIME
+#define SOCKET_ECONNRESET   ECONNRESET
+
 #define SOCKET int
 #define SOCKET_ERRNO()	errno
 #define SOCKET_RESET(x) x=-1
@@ -16,6 +19,23 @@
 #include <winsock2.h>
 #include <stdint.h>
 
+#ifdef _MSC_VER		//for VS2010
+#include <io.h>
+#include <fcntl.h>
+#define S_IRUSR _S_IREAD
+#define S_IWUSR _S_IWRITE
+#define open _open
+#define close _close
+#define lseek _lseek
+#define write _write
+#define read _read
+
+typedef int ssize_t;
+typedef int pid_t;
+typedef int mode_t;
+typedef int64_t useconds_t;
+#endif
+
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
@@ -27,8 +47,8 @@
 
 #define PRId64 "lld"
 
-#define ETIME			WSAETIMEDOUT
-#define ECONNRESET      WSAECONNRESET
+#define SOCKET_ETIME		WSAETIMEDOUT
+#define SOCKET_ECONNRESET   WSAECONNRESET
 #define SOCKET_ERRNO()    WSAGetLastError()
 #define SOCKET_RESET(x) x=INVALID_SOCKET
 #define SOCKET_CLOSE(x) if(x!=INVALID_SOCKET){::closesocket(x);x=INVALID_SOCKET;}
@@ -45,10 +65,9 @@ struct iovec {
 
 #define snprintf _snprintf
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
-const char* inet_ntop(int af, const void *src, char *dst, size_t size);
+const char* inet_ntop(int af, const void *src, char *dst, socklen_t size);
 int gettimeofday(struct timeval* tv, struct timezone* tz);
 pid_t getpid(void);
-//typedef int64_t useconds_t;
 int usleep(useconds_t usec);
 
 #endif
