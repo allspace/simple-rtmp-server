@@ -214,6 +214,21 @@ int srs_librtmp_context_connect(Context* context)
 extern "C"{
 #endif
 
+int srs_version_major()
+{
+    return VERSION_MAJOR;
+}
+
+int srs_version_minor()
+{
+    return VERSION_MINOR;
+}
+
+int srs_version_revision()
+{
+    return VERSION_REVISION;
+}
+
 srs_rtmp_t srs_rtmp_create(const char* url)
 {
     Context* context = new Context();
@@ -241,26 +256,26 @@ void srs_rtmp_destroy(srs_rtmp_t rtmp)
     srs_freep(context);
 }
 
-int srs_simple_handshake(srs_rtmp_t rtmp)
+int srs_rtmp_handshake(srs_rtmp_t rtmp)
 {
     int ret = ERROR_SUCCESS;
     
-    if ((ret = __srs_dns_resolve(rtmp)) != ERROR_SUCCESS) {
+    if ((ret = __srs_rtmp_dns_resolve(rtmp)) != ERROR_SUCCESS) {
         return ret;
     }
     
-    if ((ret = __srs_connect_server(rtmp)) != ERROR_SUCCESS) {
+    if ((ret = __srs_rtmp_connect_server(rtmp)) != ERROR_SUCCESS) {
         return ret;
     }
     
-    if ((ret = __srs_do_simple_handshake(rtmp)) != ERROR_SUCCESS) {
+    if ((ret = __srs_rtmp_do_simple_handshake(rtmp)) != ERROR_SUCCESS) {
         return ret;
     }
     
     return ret;
 }
 
-int __srs_dns_resolve(srs_rtmp_t rtmp)
+int __srs_rtmp_dns_resolve(srs_rtmp_t rtmp)
 {
     int ret = ERROR_SUCCESS;
     
@@ -279,7 +294,7 @@ int __srs_dns_resolve(srs_rtmp_t rtmp)
     return ret;
 }
 
-int __srs_connect_server(srs_rtmp_t rtmp)
+int __srs_rtmp_connect_server(srs_rtmp_t rtmp)
 {
     int ret = ERROR_SUCCESS;
     
@@ -293,7 +308,7 @@ int __srs_connect_server(srs_rtmp_t rtmp)
     return ret;
 }
 
-int __srs_do_simple_handshake(srs_rtmp_t rtmp)
+int __srs_rtmp_do_simple_handshake(srs_rtmp_t rtmp)
 {
     int ret = ERROR_SUCCESS;
     
@@ -313,7 +328,7 @@ int __srs_do_simple_handshake(srs_rtmp_t rtmp)
     return ret;
 }
 
-int srs_connect_app(srs_rtmp_t rtmp)
+int srs_rtmp_connect_app(srs_rtmp_t rtmp)
 {
     int ret = ERROR_SUCCESS;
     
@@ -334,7 +349,7 @@ int srs_connect_app(srs_rtmp_t rtmp)
     return ret;
 }
 
-int srs_connect_app2(srs_rtmp_t rtmp,
+int srs_rtmp_connect_app2(srs_rtmp_t rtmp,
     char srs_server_ip[128],char srs_server[128], char srs_primary_authors[128], 
     char srs_version[32], int* srs_id, int* srs_pid
 ) {
@@ -370,7 +385,7 @@ int srs_connect_app2(srs_rtmp_t rtmp,
     return ret;
 }
 
-int srs_play_stream(srs_rtmp_t rtmp)
+int srs_rtmp_play_stream(srs_rtmp_t rtmp)
 {
     int ret = ERROR_SUCCESS;
     
@@ -387,7 +402,7 @@ int srs_play_stream(srs_rtmp_t rtmp)
     return ret;
 }
 
-int srs_publish_stream(srs_rtmp_t rtmp)
+int srs_rtmp_publish_stream(srs_rtmp_t rtmp)
 {
     int ret = ERROR_SUCCESS;
     
@@ -401,24 +416,7 @@ int srs_publish_stream(srs_rtmp_t rtmp)
     return ret;
 }
 
-const char* srs_type2string(char type)
-{
-    static const char* audio = "Audio";
-    static const char* video = "Video";
-    static const char* data = "Data";
-    static const char* unknown = "Unknown";
-    
-    switch (type) {
-        case SRS_RTMP_TYPE_AUDIO: return audio;
-        case SRS_RTMP_TYPE_VIDEO: return video;
-        case SRS_RTMP_TYPE_SCRIPT: return data;
-        default: return unknown;
-    }
-    
-    return unknown;
-}
-
-int srs_bandwidth_check(srs_rtmp_t rtmp, 
+int srs_rtmp_bandwidth_check(srs_rtmp_t rtmp, 
     int64_t* start_time, int64_t* end_time, 
     int* play_kbps, int* publish_kbps,
     int* play_bytes, int* publish_bytes,
@@ -454,7 +452,7 @@ int srs_bandwidth_check(srs_rtmp_t rtmp,
     return ret;
 }
 
-int srs_read_packet(srs_rtmp_t rtmp, char* type, u_int32_t* timestamp, char** data, int* size)
+int srs_rtmp_read_packet(srs_rtmp_t rtmp, char* type, u_int32_t* timestamp, char** data, int* size)
 {
     *type = 0;
     *timestamp = 0;
@@ -509,7 +507,7 @@ int srs_read_packet(srs_rtmp_t rtmp, char* type, u_int32_t* timestamp, char** da
     return ret;
 }
 
-int srs_write_packet(srs_rtmp_t rtmp, char type, u_int32_t timestamp, char* data, int size)
+int srs_rtmp_write_packet(srs_rtmp_t rtmp, char type, u_int32_t timestamp, char* data, int size)
 {
     int ret = ERROR_SUCCESS;
     
@@ -560,582 +558,42 @@ int srs_write_packet(srs_rtmp_t rtmp, char type, u_int32_t timestamp, char* data
     return ret;
 }
 
-int srs_version_major()
-{
-    return VERSION_MAJOR;
-}
-
-int srs_version_minor()
-{
-    return VERSION_MINOR;
-}
-
-int srs_version_revision()
-{
-    return VERSION_REVISION;
-}
-
-int64_t srs_get_time_ms()
-{
-    srs_update_system_time_ms();
-    return srs_get_system_time_ms();
-}
-
-int64_t srs_get_nsend_bytes(srs_rtmp_t rtmp)
-{
-    srs_assert(rtmp != NULL);
-    Context* context = (Context*)rtmp;
-    return context->rtmp->get_send_bytes();
-}
-
-int64_t srs_get_nrecv_bytes(srs_rtmp_t rtmp)
-{
-    srs_assert(rtmp != NULL);
-    Context* context = (Context*)rtmp;
-    return context->rtmp->get_recv_bytes();
-}
-
-int srs_parse_timestamp(
-    u_int32_t time, char type, char* data, int size,
-    u_int32_t* ppts
+/**
+* write audio raw frame to SRS.
+*/
+int srs_audio_write_raw_frame(srs_rtmp_t rtmp, 
+    char sound_format, char sound_rate, char sound_size, char sound_type,
+    char aac_packet_type, char* frame, int frame_size, u_int32_t timestamp
 ) {
-    int ret = ERROR_SUCCESS;
-    
-    if (type != SRS_RTMP_TYPE_VIDEO) {
-        *ppts = time;
-        return ret;
-    }
+    Context* context = (Context*)rtmp;
+    srs_assert(context);
 
-    if (!SrsFlvCodec::video_is_h264(data, size)) {
-        return ERROR_FLV_INVALID_VIDEO_TAG;
+    // TODO: FIXME: for aac, must send the sequence header first.
+    
+    // for audio frame, there is 1 or 2 bytes header:
+    //      1bytes, SoundFormat|SoundRate|SoundSize|SoundType
+    //      1bytes, AACPacketType for SoundFormat == 10
+    int size = frame_size + 1;
+    if (aac_packet_type == SrsCodecAudioAAC) {
+        size += 1;
     }
-
-    if (SrsFlvCodec::video_is_sequence_header(data, size)) {
-        *ppts = time;
-        return ret;
-    }
+    char* data = new char[size];
+    char* p = data;
     
-    // 1bytes, frame type and codec id.
-    // 1bytes, avc packet type.
-    // 3bytes, cts, composition time,
-    //      pts = dts + cts, or 
-    //      cts = pts - dts.
-    if (size < 5) {
-        return ERROR_FLV_INVALID_VIDEO_TAG;
-    }
+    u_int8_t audio_header = sound_type & 0x01;
+    audio_header |= (sound_size << 1) & 0x02;
+    audio_header |= (sound_rate << 2) & 0x0c;
+    audio_header |= (sound_format << 4) & 0xf0;
     
-    u_int32_t cts = 0;
-    char* p = data + 2;
-    char* pp = (char*)&cts;
-    pp[2] = *p++;
-    pp[1] = *p++;
-    pp[0] = *p++;
-
-    *ppts = time + cts;
+    *p++ = audio_header;
     
-    return ret;
-}
-
-const char* srs_format_time()
-{
-    struct timeval tv;
-    static char buf[23];
-    
-    memset(buf, 0, sizeof(buf));
-    
-    // clock time
-    if (gettimeofday(&tv, NULL) == -1) {
-        return buf;
+    if (aac_packet_type == SrsCodecAudioAAC) {
+        *p++ = aac_packet_type;
     }
     
-    // to calendar time
-    struct tm* tm;
-    if ((tm = localtime((const time_t*)&tv.tv_sec)) == NULL) {
-        return buf;
-    }
+    memcpy(p, frame, frame_size);
     
-    snprintf(buf, sizeof(buf), 
-        "%d-%02d-%02d %02d:%02d:%02d.%03d", 
-        1900 + tm->tm_year, 1 + tm->tm_mon, tm->tm_mday, 
-        tm->tm_hour, tm->tm_min, tm->tm_sec, 
-        (int)(tv.tv_usec / 1000));
-        
-    // for srs-librtmp, @see https://github.com/winlinvip/simple-rtmp-server/issues/213
-    buf[sizeof(buf) - 1] = 0;
-    
-    return buf;
-}
-
-struct FlvContext
-{
-    SrsFileReader reader;
-    SrsFileWriter writer;
-    SrsFlvEncoder enc;
-    SrsFlvDecoder dec;
-};
-
-srs_flv_t srs_flv_open_read(const char* file)
-{
-    int ret = ERROR_SUCCESS;
-    
-    FlvContext* flv = new FlvContext();
-    
-    if ((ret = flv->reader.open(file)) != ERROR_SUCCESS) {
-        srs_freep(flv);
-        return NULL;
-    }
-    
-    if ((ret = flv->dec.initialize(&flv->reader)) != ERROR_SUCCESS) {
-        srs_freep(flv);
-        return NULL;
-    }
-    
-    return flv;
-}
-
-srs_flv_t srs_flv_open_write(const char* file)
-{
-    int ret = ERROR_SUCCESS;
-    
-    FlvContext* flv = new FlvContext();
-    
-    if ((ret = flv->writer.open(file)) != ERROR_SUCCESS) {
-        srs_freep(flv);
-        return NULL;
-    }
-    
-    if ((ret = flv->enc.initialize(&flv->writer)) != ERROR_SUCCESS) {
-        srs_freep(flv);
-        return NULL;
-    }
-    
-    return flv;
-}
-
-void srs_flv_close(srs_flv_t flv)
-{
-    FlvContext* context = (FlvContext*)flv;
-    srs_freep(context);
-}
-
-int srs_flv_read_header(srs_flv_t flv, char header[9])
-{
-    int ret = ERROR_SUCCESS;
-    
-    FlvContext* context = (FlvContext*)flv;
-
-    if (!context->reader.is_open()) {
-        return ERROR_SYSTEM_IO_INVALID;
-    }
-    
-    if ((ret = context->dec.read_header(header)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    char ts[4]; // tag size
-    if ((ret = context->dec.read_previous_tag_size(ts)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    return ret;
-}
-
-int srs_flv_read_tag_header(srs_flv_t flv, char* ptype, int32_t* pdata_size, u_int32_t* ptime)
-{
-    int ret = ERROR_SUCCESS;
-    
-    FlvContext* context = (FlvContext*)flv;
-
-    if (!context->reader.is_open()) {
-        return ERROR_SYSTEM_IO_INVALID;
-    }
-    
-    if ((ret = context->dec.read_tag_header(ptype, pdata_size, ptime)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    return ret;
-}
-
-int srs_flv_read_tag_data(srs_flv_t flv, char* data, int32_t size)
-{
-    int ret = ERROR_SUCCESS;
-    
-    FlvContext* context = (FlvContext*)flv;
-
-    if (!context->reader.is_open()) {
-        return ERROR_SYSTEM_IO_INVALID;
-    }
-    
-    if ((ret = context->dec.read_tag_data(data, size)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    char ts[4]; // tag size
-    if ((ret = context->dec.read_previous_tag_size(ts)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    return ret;
-}
-
-int srs_flv_write_header(srs_flv_t flv, char header[9])
-{
-    int ret = ERROR_SUCCESS;
-    
-    FlvContext* context = (FlvContext*)flv;
-
-    if (!context->writer.is_open()) {
-        return ERROR_SYSTEM_IO_INVALID;
-    }
-    
-    if ((ret = context->enc.write_header(header)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    return ret;
-}
-
-int srs_flv_write_tag(srs_flv_t flv, char type, int32_t time, char* data, int size)
-{
-    int ret = ERROR_SUCCESS;
-    
-    FlvContext* context = (FlvContext*)flv;
-
-    if (!context->writer.is_open()) {
-        return ERROR_SYSTEM_IO_INVALID;
-    }
-    
-    if (type == SRS_RTMP_TYPE_AUDIO) {
-        return context->enc.write_audio(time, data, size);
-    } else if (type == SRS_RTMP_TYPE_VIDEO) {
-        return context->enc.write_video(time, data, size);
-    } else {
-        return context->enc.write_metadata(data, size);
-    }
-
-    return ret;
-}
-
-int srs_flv_size_tag(int data_size)
-{
-    return SrsFlvEncoder::size_tag(data_size);
-}
-
-int64_t srs_flv_tellg(srs_flv_t flv)
-{
-    FlvContext* context = (FlvContext*)flv;
-    return context->reader.tellg();
-}
-
-void srs_flv_lseek(srs_flv_t flv, int64_t offset)
-{
-    FlvContext* context = (FlvContext*)flv;
-    context->reader.lseek(offset);
-}
-
-srs_flv_bool srs_flv_is_eof(int error_code)
-{
-    return error_code == ERROR_SYSTEM_FILE_EOF;
-}
-
-srs_flv_bool srs_flv_is_sequence_header(char* data, int32_t size)
-{
-    return SrsFlvCodec::video_is_sequence_header(data, (int)size);
-}
-
-srs_flv_bool srs_flv_is_keyframe(char* data, int32_t size)
-{
-    return SrsFlvCodec::video_is_keyframe(data, (int)size);
-}
-
-srs_amf0_t srs_amf0_parse(char* data, int size, int* nparsed)
-{
-    int ret = ERROR_SUCCESS;
-    
-    srs_amf0_t amf0 = NULL;
-    
-    SrsStream stream;
-    if ((ret = stream.initialize(data, size)) != ERROR_SUCCESS) {
-        return amf0;
-    }
-    
-    SrsAmf0Any* any = NULL;
-    if ((ret = SrsAmf0Any::discovery(&stream, &any)) != ERROR_SUCCESS) {
-        return amf0;
-    }
-    
-    stream.skip(-1 * stream.pos());
-    if ((ret = any->read(&stream)) != ERROR_SUCCESS) {
-        srs_freep(any);
-        return amf0;
-    }
-    
-    *nparsed = stream.pos();
-    amf0 = (srs_amf0_t)any;
-    
-    return amf0;
-}
-
-srs_amf0_t srs_amf0_create_number(srs_amf0_number value)
-{
-    return SrsAmf0Any::number(value);
-}
-
-srs_amf0_t srs_amf0_create_ecma_array()
-{
-    return SrsAmf0Any::ecma_array();
-}
-
-srs_amf0_t srs_amf0_create_strict_array()
-{
-    return SrsAmf0Any::strict_array();
-}
-
-srs_amf0_t srs_amf0_create_object()
-{
-    return SrsAmf0Any::object();
-}
-
-void srs_amf0_free(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_freep(any);
-}
-
-void srs_amf0_free_bytes(char* data)
-{
-    srs_freep(data);
-}
-
-int srs_amf0_size(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->total_size();
-}
-
-int srs_amf0_serialize(srs_amf0_t amf0, char* data, int size)
-{
-    int ret = ERROR_SUCCESS;
-    
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    
-    SrsStream stream;
-    if ((ret = stream.initialize(data, size)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    if ((ret = any->write(&stream)) != ERROR_SUCCESS) {
-        return ret;
-    }
-    
-    return ret;
-}
-
-srs_amf0_bool srs_amf0_is_string(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->is_string();
-}
-
-srs_amf0_bool srs_amf0_is_boolean(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->is_boolean();
-}
-
-srs_amf0_bool srs_amf0_is_number(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->is_number();
-}
-
-srs_amf0_bool srs_amf0_is_null(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->is_null();
-}
-
-srs_amf0_bool srs_amf0_is_object(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->is_object();
-}
-
-srs_amf0_bool srs_amf0_is_ecma_array(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->is_ecma_array();
-}
-
-srs_amf0_bool srs_amf0_is_strict_array(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->is_strict_array();
-}
-
-const char* srs_amf0_to_string(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->to_str_raw();
-}
-
-srs_amf0_bool srs_amf0_to_boolean(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->to_boolean();
-}
-
-srs_amf0_number srs_amf0_to_number(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    return any->to_number();
-}
-
-void srs_amf0_set_number(srs_amf0_t amf0, srs_amf0_number value)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    any->set_number(value);
-}
-
-int srs_amf0_object_property_count(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_object());
-
-    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
-    return obj->count();
-}
-
-const char* srs_amf0_object_property_name_at(srs_amf0_t amf0, int index)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_object());
-
-    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
-    return obj->key_raw_at(index);
-}
-
-srs_amf0_t srs_amf0_object_property_value_at(srs_amf0_t amf0, int index)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_object());
-
-    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
-    return (srs_amf0_t)obj->value_at(index);
-}
-
-srs_amf0_t srs_amf0_object_property(srs_amf0_t amf0, const char* name)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_object());
-
-    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
-    return (srs_amf0_t)obj->get_property(name);
-}
-
-void srs_amf0_object_property_set(srs_amf0_t amf0, const char* name, srs_amf0_t value)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_object());
-
-    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
-    any = (SrsAmf0Any*)value;
-    obj->set(name, any);
-}
-
-void srs_amf0_object_clear(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_object());
-
-    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
-    obj->clear();
-}
-
-int srs_amf0_ecma_array_property_count(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_ecma_array());
-
-    SrsAmf0EcmaArray * obj = (SrsAmf0EcmaArray*)amf0;
-    return obj->count();
-}
-
-const char* srs_amf0_ecma_array_property_name_at(srs_amf0_t amf0, int index)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_ecma_array());
-
-    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
-    return obj->key_raw_at(index);
-}
-
-srs_amf0_t srs_amf0_ecma_array_property_value_at(srs_amf0_t amf0, int index)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_ecma_array());
-
-    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
-    return (srs_amf0_t)obj->value_at(index);
-}
-
-srs_amf0_t srs_amf0_ecma_array_property(srs_amf0_t amf0, const char* name)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_ecma_array());
-
-    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
-    return (srs_amf0_t)obj->get_property(name);
-}
-
-void srs_amf0_ecma_array_property_set(srs_amf0_t amf0, const char* name, srs_amf0_t value)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_ecma_array());
-
-    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
-    any = (SrsAmf0Any*)value;
-    obj->set(name, any);
-}
-
-int srs_amf0_strict_array_property_count(srs_amf0_t amf0)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_strict_array());
-
-    SrsAmf0StrictArray * obj = (SrsAmf0StrictArray*)amf0;
-    return obj->count();
-}
-
-srs_amf0_t srs_amf0_strict_array_property_at(srs_amf0_t amf0, int index)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_strict_array());
-
-    SrsAmf0StrictArray* obj = (SrsAmf0StrictArray*)amf0;
-    return (srs_amf0_t)obj->at(index);
-}
-
-void srs_amf0_strict_array_append(srs_amf0_t amf0, srs_amf0_t value)
-{
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    srs_assert(any->is_strict_array());
-
-    SrsAmf0StrictArray* obj = (SrsAmf0StrictArray*)amf0;
-    any = (SrsAmf0Any*)value;
-    obj->append(any);
-}
-
-char* srs_amf0_human_print(srs_amf0_t amf0, char** pdata, int* psize)
-{
-    if (!amf0) {
-        return NULL;
-    }
-    
-    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
-    
-    return any->human_print(pdata, psize);
+    return srs_rtmp_write_packet(context, SRS_RTMP_TYPE_AUDIO, timestamp, data, size);
 }
 
 /**
@@ -1158,7 +616,6 @@ int __srs_write_h264_packet(Context* context,
     // @see: E.4.3 Video Tags, video_file_format_spec_v10_1.pdf, page 78
     int size = h264_raw_size + 5;
     char* data = new char[size];
-    memcpy(data + 5, h264_raw_data, h264_raw_size);
     char* p = data;
     
     // @see: E.4.3 Video Tags, video_file_format_spec_v10_1.pdf, page 78
@@ -1180,7 +637,10 @@ int __srs_write_h264_packet(Context* context,
     *p++ = pp[1];
     *p++ = pp[0];
     
-    return srs_write_packet(context, SRS_RTMP_TYPE_VIDEO, timestamp, data, size);
+    // h.264 raw data.
+    memcpy(p, h264_raw_data, h264_raw_size);
+    
+    return srs_rtmp_write_packet(context, SRS_RTMP_TYPE_VIDEO, timestamp, data, size);
 }
 
 /**
@@ -1487,6 +947,931 @@ int srs_h264_startswith_annexb(char* h264_raw_data, int h264_raw_size, int* pnb_
     }
     
     return srs_avc_startswith_annexb(&stream, pnb_start_code);
+}
+
+struct FlvContext
+{
+    SrsFileReader reader;
+    SrsFileWriter writer;
+    SrsFlvEncoder enc;
+    SrsFlvDecoder dec;
+};
+
+srs_flv_t srs_flv_open_read(const char* file)
+{
+    int ret = ERROR_SUCCESS;
+    
+    FlvContext* flv = new FlvContext();
+    
+    if ((ret = flv->reader.open(file)) != ERROR_SUCCESS) {
+        srs_freep(flv);
+        return NULL;
+    }
+    
+    if ((ret = flv->dec.initialize(&flv->reader)) != ERROR_SUCCESS) {
+        srs_freep(flv);
+        return NULL;
+    }
+    
+    return flv;
+}
+
+srs_flv_t srs_flv_open_write(const char* file)
+{
+    int ret = ERROR_SUCCESS;
+    
+    FlvContext* flv = new FlvContext();
+    
+    if ((ret = flv->writer.open(file)) != ERROR_SUCCESS) {
+        srs_freep(flv);
+        return NULL;
+    }
+    
+    if ((ret = flv->enc.initialize(&flv->writer)) != ERROR_SUCCESS) {
+        srs_freep(flv);
+        return NULL;
+    }
+    
+    return flv;
+}
+
+void srs_flv_close(srs_flv_t flv)
+{
+    FlvContext* context = (FlvContext*)flv;
+    srs_freep(context);
+}
+
+int srs_flv_read_header(srs_flv_t flv, char header[9])
+{
+    int ret = ERROR_SUCCESS;
+    
+    FlvContext* context = (FlvContext*)flv;
+
+    if (!context->reader.is_open()) {
+        return ERROR_SYSTEM_IO_INVALID;
+    }
+    
+    if ((ret = context->dec.read_header(header)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    char ts[4]; // tag size
+    if ((ret = context->dec.read_previous_tag_size(ts)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    return ret;
+}
+
+int srs_flv_read_tag_header(srs_flv_t flv, char* ptype, int32_t* pdata_size, u_int32_t* ptime)
+{
+    int ret = ERROR_SUCCESS;
+    
+    FlvContext* context = (FlvContext*)flv;
+
+    if (!context->reader.is_open()) {
+        return ERROR_SYSTEM_IO_INVALID;
+    }
+    
+    if ((ret = context->dec.read_tag_header(ptype, pdata_size, ptime)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    return ret;
+}
+
+int srs_flv_read_tag_data(srs_flv_t flv, char* data, int32_t size)
+{
+    int ret = ERROR_SUCCESS;
+    
+    FlvContext* context = (FlvContext*)flv;
+
+    if (!context->reader.is_open()) {
+        return ERROR_SYSTEM_IO_INVALID;
+    }
+    
+    if ((ret = context->dec.read_tag_data(data, size)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    char ts[4]; // tag size
+    if ((ret = context->dec.read_previous_tag_size(ts)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    return ret;
+}
+
+int srs_flv_write_header(srs_flv_t flv, char header[9])
+{
+    int ret = ERROR_SUCCESS;
+    
+    FlvContext* context = (FlvContext*)flv;
+
+    if (!context->writer.is_open()) {
+        return ERROR_SYSTEM_IO_INVALID;
+    }
+    
+    if ((ret = context->enc.write_header(header)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    return ret;
+}
+
+int srs_flv_write_tag(srs_flv_t flv, char type, int32_t time, char* data, int size)
+{
+    int ret = ERROR_SUCCESS;
+    
+    FlvContext* context = (FlvContext*)flv;
+
+    if (!context->writer.is_open()) {
+        return ERROR_SYSTEM_IO_INVALID;
+    }
+    
+    if (type == SRS_RTMP_TYPE_AUDIO) {
+        return context->enc.write_audio(time, data, size);
+    } else if (type == SRS_RTMP_TYPE_VIDEO) {
+        return context->enc.write_video(time, data, size);
+    } else {
+        return context->enc.write_metadata(data, size);
+    }
+
+    return ret;
+}
+
+int srs_flv_size_tag(int data_size)
+{
+    return SrsFlvEncoder::size_tag(data_size);
+}
+
+int64_t srs_flv_tellg(srs_flv_t flv)
+{
+    FlvContext* context = (FlvContext*)flv;
+    return context->reader.tellg();
+}
+
+void srs_flv_lseek(srs_flv_t flv, int64_t offset)
+{
+    FlvContext* context = (FlvContext*)flv;
+    context->reader.lseek(offset);
+}
+
+srs_flv_bool srs_flv_is_eof(int error_code)
+{
+    return error_code == ERROR_SYSTEM_FILE_EOF;
+}
+
+srs_flv_bool srs_flv_is_sequence_header(char* data, int32_t size)
+{
+    return SrsFlvCodec::video_is_sequence_header(data, (int)size);
+}
+
+srs_flv_bool srs_flv_is_keyframe(char* data, int32_t size)
+{
+    return SrsFlvCodec::video_is_keyframe(data, (int)size);
+}
+
+srs_amf0_t srs_amf0_parse(char* data, int size, int* nparsed)
+{
+    int ret = ERROR_SUCCESS;
+    
+    srs_amf0_t amf0 = NULL;
+    
+    SrsStream stream;
+    if ((ret = stream.initialize(data, size)) != ERROR_SUCCESS) {
+        return amf0;
+    }
+    
+    SrsAmf0Any* any = NULL;
+    if ((ret = SrsAmf0Any::discovery(&stream, &any)) != ERROR_SUCCESS) {
+        return amf0;
+    }
+    
+    stream.skip(-1 * stream.pos());
+    if ((ret = any->read(&stream)) != ERROR_SUCCESS) {
+        srs_freep(any);
+        return amf0;
+    }
+    
+    if (nparsed) {
+        *nparsed = stream.pos();
+    }
+    amf0 = (srs_amf0_t)any;
+    
+    return amf0;
+}
+
+srs_amf0_t srs_amf0_create_number(srs_amf0_number value)
+{
+    return SrsAmf0Any::number(value);
+}
+
+srs_amf0_t srs_amf0_create_ecma_array()
+{
+    return SrsAmf0Any::ecma_array();
+}
+
+srs_amf0_t srs_amf0_create_strict_array()
+{
+    return SrsAmf0Any::strict_array();
+}
+
+srs_amf0_t srs_amf0_create_object()
+{
+    return SrsAmf0Any::object();
+}
+
+void srs_amf0_free(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_freep(any);
+}
+
+void srs_amf0_free_bytes(char* data)
+{
+    srs_freep(data);
+}
+
+int srs_amf0_size(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->total_size();
+}
+
+int srs_amf0_serialize(srs_amf0_t amf0, char* data, int size)
+{
+    int ret = ERROR_SUCCESS;
+    
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    
+    SrsStream stream;
+    if ((ret = stream.initialize(data, size)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    if ((ret = any->write(&stream)) != ERROR_SUCCESS) {
+        return ret;
+    }
+    
+    return ret;
+}
+
+srs_amf0_bool srs_amf0_is_string(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->is_string();
+}
+
+srs_amf0_bool srs_amf0_is_boolean(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->is_boolean();
+}
+
+srs_amf0_bool srs_amf0_is_number(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->is_number();
+}
+
+srs_amf0_bool srs_amf0_is_null(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->is_null();
+}
+
+srs_amf0_bool srs_amf0_is_object(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->is_object();
+}
+
+srs_amf0_bool srs_amf0_is_ecma_array(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->is_ecma_array();
+}
+
+srs_amf0_bool srs_amf0_is_strict_array(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->is_strict_array();
+}
+
+const char* srs_amf0_to_string(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->to_str_raw();
+}
+
+srs_amf0_bool srs_amf0_to_boolean(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->to_boolean();
+}
+
+srs_amf0_number srs_amf0_to_number(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    return any->to_number();
+}
+
+void srs_amf0_set_number(srs_amf0_t amf0, srs_amf0_number value)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    any->set_number(value);
+}
+
+int srs_amf0_object_property_count(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_object());
+
+    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
+    return obj->count();
+}
+
+const char* srs_amf0_object_property_name_at(srs_amf0_t amf0, int index)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_object());
+
+    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
+    return obj->key_raw_at(index);
+}
+
+srs_amf0_t srs_amf0_object_property_value_at(srs_amf0_t amf0, int index)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_object());
+
+    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
+    return (srs_amf0_t)obj->value_at(index);
+}
+
+srs_amf0_t srs_amf0_object_property(srs_amf0_t amf0, const char* name)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_object());
+
+    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
+    return (srs_amf0_t)obj->get_property(name);
+}
+
+void srs_amf0_object_property_set(srs_amf0_t amf0, const char* name, srs_amf0_t value)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_object());
+
+    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
+    any = (SrsAmf0Any*)value;
+    obj->set(name, any);
+}
+
+void srs_amf0_object_clear(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_object());
+
+    SrsAmf0Object* obj = (SrsAmf0Object*)amf0;
+    obj->clear();
+}
+
+int srs_amf0_ecma_array_property_count(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_ecma_array());
+
+    SrsAmf0EcmaArray * obj = (SrsAmf0EcmaArray*)amf0;
+    return obj->count();
+}
+
+const char* srs_amf0_ecma_array_property_name_at(srs_amf0_t amf0, int index)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_ecma_array());
+
+    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
+    return obj->key_raw_at(index);
+}
+
+srs_amf0_t srs_amf0_ecma_array_property_value_at(srs_amf0_t amf0, int index)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_ecma_array());
+
+    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
+    return (srs_amf0_t)obj->value_at(index);
+}
+
+srs_amf0_t srs_amf0_ecma_array_property(srs_amf0_t amf0, const char* name)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_ecma_array());
+
+    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
+    return (srs_amf0_t)obj->get_property(name);
+}
+
+void srs_amf0_ecma_array_property_set(srs_amf0_t amf0, const char* name, srs_amf0_t value)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_ecma_array());
+
+    SrsAmf0EcmaArray* obj = (SrsAmf0EcmaArray*)amf0;
+    any = (SrsAmf0Any*)value;
+    obj->set(name, any);
+}
+
+int srs_amf0_strict_array_property_count(srs_amf0_t amf0)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_strict_array());
+
+    SrsAmf0StrictArray * obj = (SrsAmf0StrictArray*)amf0;
+    return obj->count();
+}
+
+srs_amf0_t srs_amf0_strict_array_property_at(srs_amf0_t amf0, int index)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_strict_array());
+
+    SrsAmf0StrictArray* obj = (SrsAmf0StrictArray*)amf0;
+    return (srs_amf0_t)obj->at(index);
+}
+
+void srs_amf0_strict_array_append(srs_amf0_t amf0, srs_amf0_t value)
+{
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    srs_assert(any->is_strict_array());
+
+    SrsAmf0StrictArray* obj = (SrsAmf0StrictArray*)amf0;
+    any = (SrsAmf0Any*)value;
+    obj->append(any);
+}
+
+int64_t srs_utils_time_ms()
+{
+    srs_update_system_time_ms();
+    return srs_get_system_time_ms();
+}
+
+int64_t srs_utils_send_bytes(srs_rtmp_t rtmp)
+{
+    srs_assert(rtmp != NULL);
+    Context* context = (Context*)rtmp;
+    return context->rtmp->get_send_bytes();
+}
+
+int64_t srs_utils_recv_bytes(srs_rtmp_t rtmp)
+{
+    srs_assert(rtmp != NULL);
+    Context* context = (Context*)rtmp;
+    return context->rtmp->get_recv_bytes();
+}
+
+int srs_utils_parse_timestamp(
+    u_int32_t time, char type, char* data, int size,
+    u_int32_t* ppts
+) {
+    int ret = ERROR_SUCCESS;
+    
+    if (type != SRS_RTMP_TYPE_VIDEO) {
+        *ppts = time;
+        return ret;
+    }
+
+    if (!SrsFlvCodec::video_is_h264(data, size)) {
+        return ERROR_FLV_INVALID_VIDEO_TAG;
+    }
+
+    if (SrsFlvCodec::video_is_sequence_header(data, size)) {
+        *ppts = time;
+        return ret;
+    }
+    
+    // 1bytes, frame type and codec id.
+    // 1bytes, avc packet type.
+    // 3bytes, cts, composition time,
+    //      pts = dts + cts, or 
+    //      cts = pts - dts.
+    if (size < 5) {
+        return ERROR_FLV_INVALID_VIDEO_TAG;
+    }
+    
+    u_int32_t cts = 0;
+    char* p = data + 2;
+    char* pp = (char*)&cts;
+    pp[2] = *p++;
+    pp[1] = *p++;
+    pp[0] = *p++;
+
+    *ppts = time + cts;
+    
+    return ret;
+}
+
+char srs_utils_flv_video_codec_id(char* data, int size)
+{
+    if (size < 1) {
+        return 0;
+    }
+
+    char codec_id = data[0];
+    codec_id = codec_id & 0x0F;
+    
+    return codec_id;
+}
+
+char srs_utils_flv_video_avc_packet_type(char* data, int size)
+{
+    if (size < 2) {
+        return -1;
+    }
+    
+    if (!SrsFlvCodec::video_is_h264(data, size)) {
+        return -1;
+    }
+    
+    u_int8_t avc_packet_type = data[1];
+    
+    if (avc_packet_type > 2) {
+        return -1;
+    }
+    
+    return avc_packet_type;
+}
+
+char srs_utils_flv_video_frame_type(char* data, int size)
+{
+    if (size < 1) {
+        return -1;
+    }
+    
+    if (!SrsFlvCodec::video_is_h264(data, size)) {
+        return -1;
+    }
+    
+    u_int8_t frame_type = data[0];
+    frame_type = (frame_type >> 4) & 0x0f;
+    if (frame_type < 1 || frame_type > 5) {
+        return -1;
+    }
+    
+    return frame_type;
+}
+
+char srs_utils_flv_audio_sound_format(char* data, int size)
+{
+    if (size < 1) {
+        return -1;
+    }
+    
+    u_int8_t sound_format = data[0];
+    sound_format = (sound_format >> 4) & 0x0f;
+    if (sound_format > 15 || sound_format == 12 || sound_format == 13) {
+        return -1;
+    }
+    
+    return sound_format;
+}
+
+char srs_utils_flv_audio_sound_rate(char* data, int size)
+{
+    if (size < 1) {
+        return -1;
+    }
+    
+    u_int8_t sound_rate = data[0];
+    sound_rate = (sound_rate >> 2) & 0x03;
+    if (sound_rate > 3) {
+        return -1;
+    }
+    
+    return sound_rate;
+}
+
+char srs_utils_flv_audio_sound_size(char* data, int size)
+{
+    if (size < 1) {
+        return -1;
+    }
+    
+    u_int8_t sound_size = data[0];
+    sound_size = (sound_size >> 1) & 0x01;
+    if (sound_size > 1) {
+        return -1;
+    }
+    
+    return sound_size;
+}
+
+char srs_utils_flv_audio_sound_type(char* data, int size)
+{
+    if (size < 1) {
+        return -1;
+    }
+    
+    u_int8_t sound_type = data[0];
+    sound_type = sound_type & 0x01;
+    if (sound_type > 1) {
+        return -1;
+    }
+    
+    return sound_type;
+}
+
+char srs_utils_flv_audio_aac_packet_type(char* data, int size)
+{
+    if (size < 2) {
+        return -1;
+    }
+    
+    if (srs_utils_flv_audio_sound_format(data, size) != 10) {
+        return -1;
+    }
+    
+    u_int8_t aac_packet_type = data[1];
+    aac_packet_type = aac_packet_type;
+    if (aac_packet_type > 1) {
+        return -1;
+    }
+    
+    return aac_packet_type;
+}
+
+char* srs_human_amf0_print(srs_amf0_t amf0, char** pdata, int* psize)
+{
+    if (!amf0) {
+        return NULL;
+    }
+    
+    SrsAmf0Any* any = (SrsAmf0Any*)amf0;
+    
+    return any->human_print(pdata, psize);
+}
+
+const char* srs_human_flv_tag_type2string(char type)
+{
+    static const char* audio = "Audio";
+    static const char* video = "Video";
+    static const char* data = "Data";
+    static const char* unknown = "Unknown";
+    
+    switch (type) {
+        case SRS_RTMP_TYPE_AUDIO: return audio;
+        case SRS_RTMP_TYPE_VIDEO: return video;
+        case SRS_RTMP_TYPE_SCRIPT: return data;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_video_codec_id2string(char codec_id)
+{
+    static const char* h263 = "H.263";
+    static const char* screen = "Screen";
+    static const char* vp6 = "VP6";
+    static const char* vp6_alpha = "VP6Alpha";
+    static const char* screen2 = "Screen2";
+    static const char* h264 = "H.264";
+    static const char* unknown = "Unknown";
+    
+    switch (codec_id) {
+        case 2: return h263;
+        case 3: return screen;
+        case 4: return vp6;
+        case 5: return vp6_alpha;
+        case 6: return screen2;
+        case 7: return h264;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_video_avc_packet_type2string(char avc_packet_type)
+{
+    static const char* sps_pps = "SH";
+    static const char* nalu = "Nalu";
+    static const char* sps_pps_end = "SpsPpsEnd";
+    static const char* unknown = "Unknown";
+    
+    switch (avc_packet_type) {
+        case 0: return sps_pps;
+        case 1: return nalu;
+        case 2: return sps_pps_end;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_video_frame_type2string(char frame_type)
+{
+    static const char* keyframe = "I";
+    static const char* interframe = "P/B";
+    static const char* disposable_interframe = "DI";
+    static const char* generated_keyframe = "GI";
+    static const char* video_infoframe = "VI";
+    static const char* unknown = "Unknown";
+    
+    switch (frame_type) {
+        case 1: return keyframe;
+        case 2: return interframe;
+        case 3: return disposable_interframe;
+        case 4: return generated_keyframe;
+        case 5: return video_infoframe;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_audio_sound_format2string(char sound_format)
+{
+    static const char* linear_pcm = "LinearPCM";
+    static const char* ad_pcm = "ADPCM";
+    static const char* mp3 = "MP3";
+    static const char* linear_pcm_le = "LinearPCMLe";
+    static const char* nellymoser_16khz = "NellymoserKHz16";
+    static const char* nellymoser_8khz = "NellymoserKHz8";
+    static const char* nellymoser = "Nellymoser";
+    static const char* g711_a_pcm = "G711APCM";
+    static const char* g711_mu_pcm = "G711MuPCM";
+    static const char* reserved = "Reserved";
+    static const char* aac = "AAC";
+    static const char* speex = "Speex";
+    static const char* mp3_8khz = "MP3KHz8";
+    static const char* device_specific = "DeviceSpecific";
+    static const char* unknown = "Unknown";
+    
+    switch (sound_format) {
+        case 0: return linear_pcm;
+        case 1: return ad_pcm;
+        case 2: return mp3;
+        case 3: return linear_pcm_le;
+        case 4: return nellymoser_16khz;
+        case 5: return nellymoser_8khz;
+        case 6: return nellymoser;
+        case 7: return g711_a_pcm;
+        case 8: return g711_mu_pcm;
+        case 9: return reserved;
+        case 10: return aac;
+        case 11: return speex;
+        case 14: return mp3_8khz;
+        case 15: return device_specific;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_audio_sound_rate2string(char sound_rate)
+{
+    static const char* khz_5_5 = "5.5KHz";
+    static const char* khz_11 = "11KHz";
+    static const char* khz_22 = "22KHz";
+    static const char* khz_44 = "44KHz";
+    static const char* unknown = "Unknown";
+    
+    switch (sound_rate) {
+        case 0: return khz_5_5;
+        case 1: return khz_11;
+        case 2: return khz_22;
+        case 3: return khz_44;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_audio_sound_size2string(char sound_size)
+{
+    static const char* bit_8 = "8bit";
+    static const char* bit_16 = "16bit";
+    static const char* unknown = "Unknown";
+    
+    switch (sound_size) {
+        case 0: return bit_8;
+        case 1: return bit_16;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_audio_sound_type2string(char sound_type)
+{
+    static const char* mono = "Mono";
+    static const char* stereo = "Stereo";
+    static const char* unknown = "Unknown";
+    
+    switch (sound_type) {
+        case 0: return mono;
+        case 1: return stereo;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+const char* srs_human_flv_audio_aac_packet_type2string(char aac_packet_type)
+{
+    static const char* sps_pps = "SH";
+    static const char* raw = "Raw";
+    static const char* unknown = "Unknown";
+    
+    switch (aac_packet_type) {
+        case 0: return sps_pps;
+        case 1: return raw;
+        default: return unknown;
+    }
+    
+    return unknown;
+}
+
+int srs_human_print_rtmp_packet(char type, u_int32_t timestamp, char* data, int size)
+{
+    int ret = ERROR_SUCCESS;
+    
+    u_int32_t pts;
+    if (srs_utils_parse_timestamp(timestamp, type, data, size, &pts) != 0) {
+        return ret;
+    }
+    
+    if (type == SRS_RTMP_TYPE_VIDEO) {
+        srs_human_trace("Video packet type=%s, dts=%d, pts=%d, size=%d, %s(%s,%s)", 
+            srs_human_flv_tag_type2string(type), timestamp, pts, size,
+            srs_human_flv_video_codec_id2string(srs_utils_flv_video_codec_id(data, size)),
+            srs_human_flv_video_avc_packet_type2string(srs_utils_flv_video_avc_packet_type(data, size)),
+            srs_human_flv_video_frame_type2string(srs_utils_flv_video_frame_type(data, size))
+        );
+    } else if (type == SRS_RTMP_TYPE_AUDIO) {
+        srs_human_trace("Audio packet type=%s, dts=%d, pts=%d, size=%d, %s(%s,%s,%s,%s)", 
+            srs_human_flv_tag_type2string(type), timestamp, pts, size,
+            srs_human_flv_audio_sound_format2string(srs_utils_flv_audio_sound_format(data, size)),
+            srs_human_flv_audio_sound_rate2string(srs_utils_flv_audio_sound_rate(data, size)),
+            srs_human_flv_audio_sound_size2string(srs_utils_flv_audio_sound_size(data, size)),
+            srs_human_flv_audio_sound_type2string(srs_utils_flv_audio_sound_type(data, size)),
+            srs_human_flv_audio_aac_packet_type2string(srs_utils_flv_audio_aac_packet_type(data, size))
+        );
+    } else if (type == SRS_RTMP_TYPE_SCRIPT) {
+        srs_human_verbose("Data packet type=%s, time=%d, size=%d", 
+            srs_human_flv_tag_type2string(type), timestamp, size);
+        int nparsed = 0;
+        while (nparsed < size) {
+            int nb_parsed_this = 0;
+            srs_amf0_t amf0 = srs_amf0_parse(data + nparsed, size - nparsed, &nb_parsed_this);
+            if (amf0 == NULL) {
+                break;
+            }
+            
+            nparsed += nb_parsed_this;
+            
+            char* amf0_str = NULL;
+            srs_human_raw("%s", srs_human_amf0_print(amf0, &amf0_str, NULL));
+            srs_amf0_free_bytes(amf0_str);
+        }
+    } else {
+        srs_human_trace("Unknown packet type=%s, dts=%d, pts=%d, size=%d", 
+            srs_human_flv_tag_type2string(type), timestamp, pts, size);
+    }
+    
+    return ret;
+}
+
+const char* srs_human_format_time()
+{
+    struct timeval tv;
+    static char buf[23];
+    
+    memset(buf, 0, sizeof(buf));
+    
+    // clock time
+    if (gettimeofday(&tv, NULL) == -1) {
+        return buf;
+    }
+    
+    // to calendar time
+    struct tm* tm;
+    if ((tm = localtime((const time_t*)&tv.tv_sec)) == NULL) {
+        return buf;
+    }
+    
+    snprintf(buf, sizeof(buf), 
+        "%d-%02d-%02d %02d:%02d:%02d.%03d", 
+        1900 + tm->tm_year, 1 + tm->tm_mon, tm->tm_mday, 
+        tm->tm_hour, tm->tm_min, tm->tm_sec, 
+        (int)(tv.tv_usec / 1000));
+        
+    // for srs-librtmp, @see https://github.com/winlinvip/simple-rtmp-server/issues/213
+    buf[sizeof(buf) - 1] = 0;
+    
+    return buf;
 }
 
 #ifdef __cplusplus
