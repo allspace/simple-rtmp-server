@@ -49,6 +49,7 @@ SimpleSocketStream::SimpleSocketStream()
 	SOCKET_RESET(fd);
     send_timeout = recv_timeout = ST_UTIME_NO_TIMEOUT;
     recv_bytes = send_bytes = 0;
+	SOCKET_SETUP();
 }
 
 SimpleSocketStream::~SimpleSocketStream()
@@ -58,13 +59,14 @@ SimpleSocketStream::~SimpleSocketStream()
     //    fd = -1;
     //}
 	SOCKET_CLOSE(fd);
+	SOCKET_CLEANUP();
 }
 
 int SimpleSocketStream::create_socket()
 {
     //if((fd = ::socket(AF_INET, SOCK_STREAM, 0)) < 0){
 	fd = ::socket(AF_INET, SOCK_STREAM, 0);
-	if(SOCKET_CHECK(fd)){
+	if(!SOCKET_VALID(fd)){
         return ERROR_SOCKET_CREATE;
     }
 

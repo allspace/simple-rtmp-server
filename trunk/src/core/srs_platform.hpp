@@ -11,6 +11,7 @@
 #define SOCKET_RESET(x) x=-1
 #define SOCKET_CLOSE(x) if(x>=0){::close(x);x=-1}
 #define SOCKET_CHECK(x) (x>=0)
+#define SOCKET_SETUP()
 
 #else /*on windows, but not on cygwin*/
 
@@ -52,8 +53,10 @@ typedef int64_t useconds_t;
 #define SOCKET_ERRNO()    WSAGetLastError()
 #define SOCKET_RESET(x) x=INVALID_SOCKET
 #define SOCKET_CLOSE(x) if(x!=INVALID_SOCKET){::closesocket(x);x=INVALID_SOCKET;}
-#define SOCKET_CHECK(x) (x!=INVALID_SOCKET)
+#define SOCKET_VALID(x) (x!=INVALID_SOCKET)
 #define SOCKET_BUFF(x)  ((char*)x)
+#define SOCKET_SETUP()	socket_setup()
+#define SOCKET_CLEANUP() socket_cleanup()
 
 typedef uint32_t u_int32_t;
 typedef uint8_t  u_int8_t;
@@ -69,7 +72,8 @@ const char* inet_ntop(int af, const void *src, char *dst, socklen_t size);
 int gettimeofday(struct timeval* tv, struct timezone* tz);
 pid_t getpid(void);
 int usleep(useconds_t usec);
-
+int socket_setup();
+int socket_cleanup();
 #endif
 
 #endif //SRS_WIN_PORTING_H
