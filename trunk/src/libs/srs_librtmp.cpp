@@ -22,7 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #include <srs_librtmp.hpp>
-
+#include <srs_platform.hpp>
 #include <stdlib.h>
 
 // for srs-librtmp, @see https://github.com/winlinvip/simple-rtmp-server/issues/213

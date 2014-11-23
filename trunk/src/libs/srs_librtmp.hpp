@@ -30,7 +30,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <sys/types.h>
 
-#include <srs_platform.hpp>
 
 // for srs-librtmp, @see https://github.com/winlinvip/simple-rtmp-server/issues/213
 #if 0
@@ -72,6 +71,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
     typedef int64_t useconds_t;
     int usleep(useconds_t usec);
+#endif
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <stdint.h>
+typedef uint32_t u_int32_t;
 #endif
 
 /**
