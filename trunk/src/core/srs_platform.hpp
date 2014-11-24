@@ -9,9 +9,10 @@
 #define SOCKET int
 #define SOCKET_ERRNO()	errno
 #define SOCKET_RESET(x) x=-1
-#define SOCKET_CLOSE(x) if(x>=0){::close(x);x=-1}
-#define SOCKET_CHECK(x) (x>=0)
-#define SOCKET_SETUP()
+#define SOCKET_CLOSE(x) if(x>=0){::close(x);x=-1;}
+#define SOCKET_VALID(x) (x>=0)
+#define SOCKET_SETUP()   {}
+#define SOCKET_CLEANUP() {}
 
 #else /*on windows, but not on cygwin*/
 
