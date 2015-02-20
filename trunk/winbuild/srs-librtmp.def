@@ -1,5 +1,8 @@
 LIBRARY
 EXPORTS
+
+usleep
+
 srs_rtmp_create
 srs_rtmp_create2
 srs_rtmp_destroy
@@ -37,6 +40,7 @@ srs_flv_lseek
 srs_flv_is_eof
 srs_flv_is_sequence_header
 srs_flv_is_keyframe
+srs_human_flv_tag_type2string
 
 ;;;;;;;;for h264 read/write;;;;;;;;
 srs_h264_write_raw_frames
